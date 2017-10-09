@@ -1,16 +1,19 @@
 <?php
 
-namespace Drupal\Tests\commerce_authnet\Functional;
+namespace Drupal\Tests\commerce_authnet\FunctionalJavascript;
 
 use Drupal\commerce_payment\Entity\PaymentGateway;
 use Drupal\Tests\commerce\Functional\CommerceBrowserTestBase;
+use Drupal\Tests\commerce\FunctionalJavascript\JavascriptTestTrait;
 
 /**
- * Tests the Authorize.net payment configurationf orm.
+ * Tests the Authorize.net payment configuration form.
  *
  * @group commerce_authnet
  */
 class ConfigurationFormTest extends CommerceBrowserTestBase {
+
+  use JavascriptTestTrait;
 
   /**
    * {@inheritdoc}
@@ -35,23 +38,20 @@ class ConfigurationFormTest extends CommerceBrowserTestBase {
     $this->drupalGet('admin/commerce/config/payment-gateways');
     $this->getSession()->getPage()->clickLink('Add payment gateway');
     $this->assertSession()->addressEquals('admin/commerce/config/payment-gateways/add');
+    $radio_button = $this->getSession()->getPage()->findField('Authorize.net');
+    $radio_button->click();
+    $this->waitForAjaxToFinish();
     $values = [
       'id' => 'authorize_net_us',
       'label' => 'Authorize.net US',
       'plugin' => 'authorizenet',
+      'configuration[authorizenet][api_login]' => '5KP3u95bQpv',
+      'configuration[authorizenet][transaction_key]' => '346HZ32z3fP4hTG2',
+      'configuration[authorizenet][mode]' => 'test',
       'status' => 1,
     ];
     $this->submitForm($values, 'Save');
-    $this->assertSession()->addressEquals('admin/commerce/config/payment-gateways/manage/authorize_net_us');
     $this->assertSession()->pageTextContains('Saved the Authorize.net US payment gateway.');
-    $values += [
-      'configuration[api_login]' => '5KP3u95bQpv',
-      'configuration[transaction_key]' => '346HZ32z3fP4hTG2',
-      'configuration[mode]' => 'test',
-      'status' => '1',
-    ];
-    $this->submitForm($values, 'Save');
-    $this->assertSession()->addressEquals('admin/commerce/config/payment-gateways');
     $payment_gateway = PaymentGateway::load('authorize_net_us');
     $this->assertEquals('authorize_net_us', $payment_gateway->id());
     $this->assertEquals('Authorize.net US', $payment_gateway->label());
